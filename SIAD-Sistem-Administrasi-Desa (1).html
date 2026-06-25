@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAD - Sistem Informasi Administrasi Desa</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --navy:#1F3C5C;
+    --navy-dark:#152A40;
+    --maroon:#8B2331;
+    --maroon-dark:#6E1B26;
+    --paper:#FBF9F4;
+    --paper-line:#D8D2C2;
+    --ink:#1C1C1C;
+    --ink-soft:#5A5A56;
+    --bg:#EEF1F4;
+    --panel:#FFFFFF;
+    --border:#DADFE3;
+    --amber:#9A6B12;
+    --amber-bg:#FCEFD8;
+    --green:#256B45;
+    --green-bg:#E3F1E7;
+    --red:#A3322E;
+    --red-bg:#FBE6E4;
+    --gray-bg:#EFEEE9;
+    --radius:10px;
+    --serif: "Georgia","Times New Roman",serif;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);font-family:var(--sans);color:var(--ink);}
+  button{font-family:var(--sans);cursor:pointer;}
+  input,select,textarea{font-family:var(--sans);}
+  #app{min-height:100vh;}
+  .hidden{display:none !important;}
+
+  /* ===== LOGIN ===== */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--navy) 0%, var(--navy) 38%, var(--bg) 38%);padding:24px;}
+  .login-card{width:100%;max-width:380px;background:var(--panel);border-radius:var(--radius);border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,0.18);overflow:hidden;}
+  .login-head{background:var(--navy-dark);color:#fff;padding:28px 28px 22px;}
+  .login-head .badge{width:46px;height:46px;border-radius:50%;background:var(--maroon);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;margin-bottom:14px;}
+  .login-head h1{font-size:19px;margin:0 0 4px;font-weight:600;letter-spacing:.2px;}
+  .login-head p{margin:0;font-size:12.5px;opacity:.8;}
+  .login-body{padding:24px 28px 28px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:600;}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;color:var(--ink);}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(31,60,92,0.12);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;border:1px solid transparent;padding:10px 16px;font-size:13.5px;font-weight:600;transition:opacity .15s;}
+  .btn:active{opacity:.85;}
+  .btn-primary{background:var(--maroon);color:#fff;}
+  .btn-primary:hover{background:var(--maroon-dark);}
+  .btn-block{width:100%;}
+  .btn-outline{background:#fff;border:1px solid var(--border);color:var(--ink);}
+  .btn-outline:hover{background:var(--gray-bg);}
+  .btn-ghost{background:transparent;border:1px solid transparent;color:var(--navy);}
+  .btn-ghost:hover{background:rgba(31,60,92,0.08);}
+  .btn-sm{padding:6px 10px;font-size:12.5px;}
+  .btn-danger{background:var(--red);color:#fff;}
+  .btn-danger:hover{background:var(--maroon-dark);}
+  .login-err{background:var(--red-bg);color:var(--red);font-size:12.5px;padding:8px 10px;border-radius:8px;margin-bottom:12px;}
+  .login-hint{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+  .login-hint b{color:var(--ink);}
+
+  /* ===== APP SHELL ===== */
+  .shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh;}
+  .sidebar{background:var(--navy-dark);color:#fff;display:flex;flex-direction:column;}
+  .sidebar-top{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+  .sidebar-top .desa-name{font-size:14px;font-weight:600;line-height:1.3;}
+  .sidebar-top .desa-sub{font-size:11px;opacity:.65;margin-top:2px;}
+  .nav{flex:1;padding:12px 10px;overflow-y:auto;}
+  .nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;opacity:.5;padding:14px 10px 6px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13.5px;color:rgba(255,255,255,0.85);cursor:pointer;margin-bottom:2px;}
+  .nav-item:hover{background:rgba(255,255,255,0.08);}
+  .nav-item.active{background:var(--maroon);color:#fff;}
+  .nav-item .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7;flex-shrink:0;}
+  .sidebar-bottom{padding:14px 16px;border-top:1px solid rgba(255,255,255,0.1);}
+  .user-chip{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .user-chip .avatar{width:32px;height:32px;border-radius:50%;background:var(--maroon);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .user-chip .uname{font-size:12.5px;font-weight:600;line-height:1.3;}
+  .user-chip .urole{font-size:10.5px;opacity:.6;}
+
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 26px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar h2{font-size:17px;margin:0;font-weight:600;}
+  .topbar .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .content{padding:24px 26px 60px;flex:1;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+  .card + .card{margin-top:16px;}
+  .grid{display:grid;gap:14px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:repeat(2,1fr);}
+  @media(max-width:1000px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:repeat(2,1fr);}}
+
+  .metric{background:var(--gray-bg);border-radius:8px;padding:14px 16px;}
+  .metric .m-label{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .metric .m-value{font-size:24px;font-weight:600;}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+  table.tbl th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid var(--border);font-weight:600;}
+  table.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  table.tbl tr:last-child td{border-bottom:none;}
+  table.tbl tr:hover td{background:#FAFAF8;}
+
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;}
+  .badge-draft{background:var(--gray-bg);color:var(--ink-soft);}
+  .badge-diajukan{background:var(--amber-bg);color:var(--amber);}
+  .badge-bpd_review{background:#E6EEF8;color:var(--navy);}
+  .badge-disetujui{background:var(--green-bg);color:var(--green);}
+  .badge-ditolak{background:var(--red-bg);color:var(--red);}
+
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar input,.toolbar select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;}
+  .spacer{flex:1;}
+  .section-title{font-size:14.5px;font-weight:600;margin:0 0 12px;}
+  .empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+  .empty-state i{font-size:30px;display:block;margin-bottom:10px;opacity:.5;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,28,38,0.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .modal-box{background:var(--panel);border-radius:var(--radius);max-width:760px;width:100%;max-height:90vh;overflow-y:auto;}
+  .modal-box.modal-wide{max-width:1040px;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);}
+  .modal-head h3{margin:0;font-size:15.5px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--ink-soft);cursor:pointer;line-height:1;}
+  .modal-body{padding:20px 22px;}
+  .modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+  .var-tag{display:inline-block;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;margin:2px 4px 2px 0;cursor:pointer;font-family:var(--sans);}
+  .var-tag:hover{background:var(--navy-dark);}
+  textarea.code{font-family:"Courier New",monospace;font-size:12.5px;min-height:170px;line-height:1.5;}
+
+  /* ===== DOCUMENT / LETTER PREVIEW ===== */
+  .doc-frame{background:var(--paper);border:1px solid var(--paper-line);border-radius:6px;padding:34px 38px;font-family:var(--serif);color:#111;font-size:13.5px;line-height:1.55;min-height:300px;}
+  .kop{display:flex;align-items:center;gap:16px;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:14px;}
+  .kop img{width:62px;height:62px;object-fit:contain;flex-shrink:0;}
+  .kop .kop-text{flex:1;text-align:center;}
+  .kop .kop-text .l1{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+  .kop .kop-text .l2{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .kop .kop-text .l3{font-size:11px;margin-top:2px;}
+  .doc-meta{margin-bottom:14px;}
+  .doc-meta table{font-size:13.5px;}
+  .doc-meta table td{padding:1px 6px 1px 0;vertical-align:top;}
+  .doc-body{white-space:pre-wrap;min-height:80px;}
+  .doc-sign{display:flex;justify-content:flex-end;margin-top:26px;}
+  .doc-sign .sign-block{text-align:center;width:240px;}
+  .doc-sign img.ttd{height:54px;object-fit:contain;margin:6px 0;}
+  .nomor-pill{display:inline-block;background:var(--navy);color:#fff;font-family:var(--sans);font-size:11px;padding:2px 8px;border-radius:6px;margin-left:8px;}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:1100px){.split{grid-template-columns:1fr;}}
+  .sticky{position:sticky;top:0;}
+
+  .icon{display:inline-block;width:1em;}
+  ::placeholder{color:#A8A8A2;}
+  .help{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .switch{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;}
+  .switch input{width:auto;}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--navy-dark);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;z-index:400;box-shadow:0 6px 18px rgba(0,0,0,0.25);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============== STORAGE HELPERS ============== */
+async function dbGet(key, def){
+  try{
+    const r = await window.storage.get(key);
+    return r && r.value ? JSON.parse(r.value) : def;
+  }catch(e){ return def; }
+}
+async function dbSet(key, val){
+  try{ await window.storage.set(key, JSON.stringify(val)); }catch(e){ console.error('storage set failed', key, e); }
+}
+
+/* ============== APP STATE ============== */
+const ST = {
+  profile:null, users:[], templates:[], letters:[], kodeSurat:[], numbering:null,
+  session:null, view:'dashboard', toastTimer:null
+};
+
+const JENIS_LABEL = {
+  surat_keluar:'Surat Keluar', sk:'Surat Keputusan (SK)', perdes:'Peraturan Desa (Perdes)',
+  perkades:'Peraturan Kepala Desa', proposal:'Proposal Desa', nota_dinas:'Nota Dinas'
+};
+const ROLE_LABEL = { admin:'Admin', perangkat:'Perangkat Desa', kepala_desa:'Kepala Desa', bpd:'BPD' };
+const STATUS_LABEL = { draft:'Draft', diajukan:'Diajukan', bpd_review:'Menunggu BPD', disetujui:'Disetujui', ditolak:'Ditolak' };
+const ROMAWI = ['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+
+function uid(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function pad3(n){ return String(n).padStart(3,'0'); }
+function fmtTanggalID(d){
+  const bln=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const dt = (d instanceof Date)? d : new Date(d);
+  return dt.getDate()+' '+bln[dt.getMonth()]+' '+dt.getFullYear();
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function nl2br(s){ return escapeHtml(s).replace(/\n/g,'<br>'); }
+function toast(msg){
+  const old = document.querySelector('.toast'); if(old) old.remove();
+  const el = document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  clearTimeout(ST.toastTimer);
+  ST.toastTimer = setTimeout(()=>el.remove(), 2600);
+}
+
+/* ============== DEFAULT / SEED DATA ============== */
+function defaultProfile(){
+  return {
+    nama_desa:'Desa Sukamaju', kecamatan:'Kecamatan Talang Empat', kabupaten:'Kabupaten Bengkulu Tengah',
+    alamat:'Jl. Raya Desa No. 1, Sukamaju', telp:'-', email:'-', logo:null,
+    kepala_desa:'(Nama Kepala Desa)', jabatan_ttd:'Kepala Desa', ttd:null, tahun_aktif: new Date().getFullYear(),
+    kop_garis1:'PEMERINTAH KABUPATEN BENGKULU TENGAH', kop_garis2:'KECAMATAN TALANG EMPAT'
+  };
+}
+function defaultUsers(){
+  return [
+    {id:uid(), nama_lengkap:'Administrator Sistem', username:'admin', password:'admin123', role:'admin', jabatan:'Sekretaris Desa / Operator', aktif:true},
+    {id:uid(), nama_lengkap:'Kaur Umum', username:'kaur', password:'kaur123', role:'perangkat', jabatan:'Kaur Umum', aktif:true},
+    {id:uid(), nama_lengkap:'Kepala Desa', username:'kades', password:'kades123', role:'kepala_desa', jabatan:'Kepala Desa', aktif:true},
+    {id:uid(), nama_lengkap:'Ketua BPD', username:'bpd', password:'bpd123', role:'bpd', jabatan:'Ketua BPD', aktif:true}
+  ];
+}
+function defaultKodeSurat(){
+  return [
+    {kode:'SK', jenis_surat:'sk', label:'Surat Keputusan'},
+    {kode:'UM', jenis_surat:'surat_keluar', label:'Surat Umum / Surat Keluar biasa'},
+    {kode:'PD', jenis_surat:'perdes', label:'Peraturan Desa'},
+    {kode:'PKD', jenis_surat:'perkades', label:'Peraturan Kepala Desa'},
+    {kode:'PP', jenis_surat:'proposal', label:'Proposal / Permohonan'},
+    {kode:'ND', jenis_surat:'nota_dinas', label:'Nota Dinas'}
+  ];
+}
+function defaultTemplates(){
+  const bodyUmum = 'Sehubungan dengan {{perihal}}, kami sampaikan hal-hal sebagai berikut:\n\n{{isi_surat}}\n\nDemikian surat ini disampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.';
+  const bodySK = 'Menimbang, menetapkan, dan memutuskan hal berikut:\n\n{{isi_surat}}\n\nKeputusan ini berlaku sejak tanggal ditetapkan dan akan ditinjau kembali apabila terdapat kekeliruan.';
+  const bodyProposal = 'Dalam rangka {{perihal}}, kami mengajukan proposal sebagai berikut:\n\n{{isi_surat}}\n\nBesar harapan kami atas dukungan dan persetujuan dari Bapak/Ibu. Atas perhatiannya kami ucapkan terima kasih.';
+  return [
+    {id:uid(), nama_template:'Surat Keluar Umum', jenis_surat:'surat_keluar', isi_html:bodyUmum, kop_custom:'', aktif:true},
+    {id:uid(), nama_template:'Surat Keputusan Kepala Desa', jenis_surat:'sk', isi_html:bodySK, kop_custom:'', aktif:true},
+    {id:uid(), nama_template:'Proposal Bantuan / Permohonan', jenis_surat:'proposal', isi_html:bodyProposal, kop_custom:'', aktif:true}
+  ];
+}
+
+async function loadAll(){
+  const seeded = await dbGet('siad:seeded', false);
+  if(!seeded){
+    await dbSet('siad:profile', defaultProfile());
+    await dbSet('siad:users', defaultUsers());
+    await dbSet('siad:templates', defaultTemplates());
+    await dbSet('siad:letters', []);
+    await dbSet('siad:kode_surat', defaultKodeSurat());
+    await dbSet('siad:numbering', {tahun_aktif: new Date().getFullYear(), counter:0});
+    await dbSet('siad:seeded', true);
+  }
+  ST.profile = await dbGet('siad:profile', defaultProfile());
+  ST.users = await dbGet('siad:users', defaultUsers());
+  ST.templates = await dbGet('siad:templates', defaultTemplates());
+  ST.letters = await dbGet('siad:letters', []);
+  ST.kodeSurat = await dbGet('siad:kode_surat', defaultKodeSurat());
+  ST.numbering = await dbGet('siad:numbering', {tahun_aktif:new Date().getFullYear(), counter:0});
+}
+async function saveProfile(){ await dbSet('siad:profile', ST.profile); }
+async function saveUsers(){ await dbSet('siad:users', ST.users); }
+async function saveTemplates(){ await dbSet('siad:templates', ST.templates); }
+async function saveLetters(){ await dbSet('siad:letters', ST.letters); }
+async function saveKodeSurat(){ await dbSet('siad:kode_surat', ST.kodeSurat); }
+async function saveNumbering(){ await dbSet('siad:numbering', ST.numbering); }
+
+/* ============== AUTH ============== */
+function tryLogin(username, password){
+  const u = ST.users.find(x => x.username.toLowerCase() === username.toLowerCase() && x.password === password);
+  if(!u) return null;
+  if(!u.aktif) return 'inactive';
+  return u;
+}
+function initials(name){
+  return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+}
+
+/* ============== NUMBERING (auto) ============== */
+function kodeForJenis(jenis){
+  const k = ST.kodeSurat.find(x=>x.jenis_surat===jenis);
+  return k ? k.kode : 'UM';
+}
+async function generateNomor(jenis, tanggalSurat){
+  const tahunNow = (tanggalSurat? new Date(tanggalSurat) : new Date()).getFullYear();
+  if(ST.numbering.tahun_aktif !== tahunNow){
+    ST.numbering.tahun_aktif = tahunNow;
+    ST.numbering.counter = 0;
+  }
+  ST.numbering.counter += 1;
+  await saveNumbering();
+  const bln = (tanggalSurat? new Date(tanggalSurat) : new Date()).getMonth()+1;
+  const kode = kodeForJenis(jenis);
+  const nomor_lengkap = pad3(ST.numbering.counter)+'/'+kode+'/TK/'+ROMAWI[bln]+'/'+ST.numbering.tahun_aktif;
+  return { nomor_urut: ST.numbering.counter, kode_surat: kode, nomor_lengkap };
+}
+
+/* ============== TEMPLATE VARIABLES ============== */
+const AUTO_VARS = ['nama_desa','kecamatan','kabupaten','nomor_surat','tanggal','kepala_desa','tempat'];
+function extractVars(html){
+  const found = new Set();
+  const re = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g; let m;
+  while((m = re.exec(html||''))) found.add(m[1]);
+  return [...found].filter(v => !AUTO_VARS.includes(v));
+}
+function substituteVars(tpl, vars){
+  return String(tpl||'').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (full, key) => {
+    return (vars[key]!==undefined && vars[key]!==null) ? vars[key] : full;
+  });
+}
+
+/* ============== DOCUMENT RENDER (kop + body) ============== */
+function renderKop(profile, customKopHtml){
+  if(customKopHtml && customKopHtml.trim()){
+    return '<div class="kop">'+customKopHtml+'</div>';
+  }
+  const logoImg = profile.logo ? '<img src="'+profile.logo+'" alt="Logo Desa">' : '<div style="width:62px;height:62px;flex-shrink:0;"></div>';
+  return '<div class="kop">'+logoImg+
+    '<div class="kop-text">'+
+      '<div class="l1">'+escapeHtml(profile.kop_garis1||'')+'</div>'+
+      '<div class="l1">'+escapeHtml(profile.kop_garis2||'')+'</div>'+
+      '<div class="l2">'+escapeHtml((profile.nama_desa||'').toUpperCase())+'</div>'+
+      '<div class="l3">'+escapeHtml(profile.alamat||'')+(profile.telp&&profile.telp!=='-'?' &middot; Telp: '+escapeHtml(profile.telp):'')+(profile.email&&profile.email!=='-'?' &middot; '+escapeHtml(profile.email):'')+'</div>'+
+    '</div>'+
+    (profile.logo ? '<div style="width:62px;flex-shrink:0;"></div>' : '')+
+  '</div>';
+}
+function renderDocPreview(letter, template, profile){
+  const tanggalDisplay = fmtTanggalID(letter.fields.tanggal_surat || new Date());
+  const tempat = letter.fields.tempat || profile.nama_desa;
+  const vars = Object.assign({}, letter.fields, {
+    nama_desa: profile.nama_desa, kecamatan: profile.kecamatan, kabupaten: profile.kabupaten,
+    nomor_surat: letter.nomor_lengkap || '<span style="color:#999">[belum bernomor - akan dibuat otomatis saat disetujui]</span>',
+    tanggal: tanggalDisplay, kepala_desa: profile.kepala_desa, tempat: tempat
+  });
+  const bodyHtml = nl2br(substituteVars(template ? template.isi_html : '', vars));
+  const kopHtml = renderKop(profile, template ? template.kop_custom : '');
+  const isPerdes = letter.jenis_surat === 'perdes';
+  let signLabel = profile.jabatan_ttd || 'Kepala Desa';
+  let signName = profile.kepala_desa;
+  let ttdImg = profile.ttd ? '<img class="ttd" src="'+profile.ttd+'" alt="Tanda tangan">' : '<div style="height:54px;"></div>';
+  if(letter.status !== 'disetujui'){ ttdImg = '<div style="height:54px;"></div>'; }
+
+  return '<div class="doc-frame">'+
+    kopHtml+
+    '<div class="doc-meta"><table>'+
+      '<tr><td>'+tempat+', '+tanggalDisplay+'</td><td></td></tr>'+
+    '</table>'+
+    '<table style="margin-top:8px;">'+
+      '<tr><td style="width:90px;">Nomor</td><td>: '+(letter.nomor_lengkap || '-')+'</td></tr>'+
+      '<tr><td>Lampiran</td><td>: '+escapeHtml(letter.fields.lampiran||'-')+'</td></tr>'+
+      '<tr><td>Perihal</td><td>: <b>'+escapeHtml(letter.fields.perihal||letter.judul||'-')+'</b></td></tr>'+
+    '</table></div>'+
+    (letter.fields.nama_penerima ? '<div style="margin-bottom:14px;">Kepada Yth.<br><b>'+escapeHtml(letter.fields.nama_penerima)+'</b><br>di -<br>Tempat</div>' : '')+
+    '<div class="doc-body">'+bodyHtml+'</div>'+
+    '<div class="doc-sign"><div class="sign-block">'+
+      escapeHtml(signLabel)+' '+escapeHtml(profile.nama_desa)+','+
+      ttdImg+
+      '<div style="font-weight:700;text-decoration:underline;">'+escapeHtml(signName)+'</div>'+
+    '</div></div>'+
+    (isPerdes ? '<div style="margin-top:10px;font-size:11.5px;color:#555;">Dokumen Peraturan Desa memerlukan persetujuan Badan Permusyawaratan Desa (BPD) sebelum final.</div>' : '')+
+  '</div>';
+}
+
+/* ============== NAV CONFIG PER ROLE ============== */
+function navForRole(role){
+  const base = [
+    {group:'Utama', items:[
+      {key:'dashboard', label:'Dashboard', icon:'&#9632;'},
+      {key:'surat_buat', label:'Buat Surat Baru', icon:'&#9998;'},
+      {key:'surat_saya', label:'Surat Saya', icon:'&#9776;'},
+      {key:'arsip', label:'Arsip & Pencarian', icon:'&#128193;'}
+    ]}
+  ];
+  if(role==='kepala_desa'){
+    base.push({group:'Persetujuan', items:[ {key:'persetujuan', label:'Surat Menunggu Persetujuan', icon:'&#10003;'} ]});
+  }
+  if(role==='bpd'){
+    base[0].items = [
+      {key:'dashboard', label:'Dashboard', icon:'&#9632;'},
+      {key:'bpd_review', label:'Review Peraturan Desa', icon:'&#9998;'},
+      {key:'arsip', label:'Arsip Perdes', icon:'&#128193;'}
+    ];
+  }
+  if(role==='admin'){
+    base.push({group:'Administrasi', items:[
+      {key:'persetujuan', label:'Persetujuan Surat', icon:'&#10003;'},
+      {key:'template', label:'Template Surat', icon:'&#128196;'},
+      {key:'pengguna', label:'Manajemen Pengguna', icon:'&#128100;'},
+      {key:'penomoran', label:'Pengaturan Penomoran', icon:'&#35;'},
+      {key:'pengaturan', label:'Profil & Kop Surat', icon:'&#9881;'},
+      {key:'laporan', label:'Laporan & Export', icon:'&#128202;'}
+    ]});
+  }
+  return base;
+}
+
+/* ============== RENDER: LOGIN ============== */
+function renderLogin(err){
+  return '<div class="login-wrap"><div class="login-card">'+
+    '<div class="login-head"><div class="badge">SD</div>'+
+      '<h1>SIAD &mdash; Sistem Informasi Administrasi Desa</h1>'+
+      '<p>'+escapeHtml(ST.profile.nama_desa)+', '+escapeHtml(ST.profile.kecamatan)+'</p>'+
+    '</div>'+
+    '<div class="login-body">'+
+      (err? '<div class="login-err">'+escapeHtml(err)+'</div>' : '')+
+      '<form id="loginForm">'+
+        '<div class="field"><label>Username</label><input type="text" id="loginUser" autocomplete="username" required></div>'+
+        '<div class="field"><label>Password</label><input type="password" id="loginPass" autocomplete="current-password" required></div>'+
+        '<button type="submit" class="btn btn-primary btn-block">Masuk</button>'+
+      '</form>'+
+      '<div class="login-hint">Akun demo &mdash; silakan login lalu ubah password di menu Pengguna:<br>'+
+        '<b>admin</b>/admin123 (Admin) &middot; <b>kaur</b>/kaur123 (Perangkat Desa)<br>'+
+        '<b>kades</b>/kades123 (Kepala Desa) &middot; <b>bpd</b>/bpd123 (BPD)</div>'+
+    '</div>'+
+  '</div></div>';
+}
+function bindLogin(){
+  const form = document.getElementById('loginForm');
+  if(!form) return;
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const result = tryLogin(u,p);
+    if(result === null){ render(renderLogin('Username atau password salah.')); return; }
+    if(result === 'inactive'){ render(renderLogin('Akun ini telah dinonaktifkan oleh Admin.')); return; }
+    ST.session = result;
+    ST.view = result.role==='bpd' ? 'dashboard' : 'dashboard';
+    renderApp();
+  });
+}
+
+/* ============== APP SHELL ============== */
+function renderApp(){
+  const role = ST.session.role;
+  const nav = navForRole(role);
+  let navHtml = '';
+  nav.forEach(g=>{
+    navHtml += '<div class="nav-group-label">'+g.group+'</div>';
+    g.items.forEach(it=>{
+      navHtml += '<div class="nav-item '+(ST.view===it.key?'active':'')+'" data-nav="'+it.key+'"><span class="dot"></span>'+it.label+'</div>';
+    });
+  });
+  const shell = '<div class="shell">'+
+    '<div class="sidebar">'+
+      '<div class="sidebar-top"><div class="desa-name">'+escapeHtml(ST.profile.nama_desa)+'</div><div class="desa-sub">'+escapeHtml(ST.profile.kecamatan)+', '+escapeHtml(ST.profile.kabupaten)+'</div></div>'+
+      '<div class="nav">'+navHtml+'</div>'+
+      '<div class="sidebar-bottom">'+
+        '<div class="user-chip"><div class="avatar">'+initials(ST.session.nama_lengkap)+'</div><div><div class="uname">'+escapeHtml(ST.session.nama_lengkap)+'</div><div class="urole">'+ROLE_LABEL[role]+'</div></div></div>'+
+        '<button class="btn btn-outline btn-sm btn-block" id="btnLogout">Keluar</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="main">'+
+      '<div class="topbar" id="topbar"></div>'+
+      '<div class="content" id="content"></div>'+
+    '</div>'+
+  '</div>';
+  render(shell);
+  document.getElementById('btnLogout').addEventListener('click', ()=>{ ST.session=null; render(renderLogin()); bindLogin(); });
+  document.querySelectorAll('[data-nav]').forEach(el=>{
+    el.addEventListener('click', ()=>{ ST.view = el.getAttribute('data-nav'); ST.editId=null; renderApp(); });
+  });
+  renderView();
+}
+
+function setTopbar(title, sub){
+  document.getElementById('topbar').innerHTML = '<div><h2>'+title+'</h2>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+}
+
+function renderView(){
+  const v = ST.view;
+  if(v==='dashboard') return renderDashboard();
+  if(v==='surat_buat') return renderSuratBuat();
+  if(v==='surat_saya') return renderSuratSaya();
+  if(v==='arsip') return renderArsip();
+  if(v==='persetujuan') return renderPersetujuan();
+  if(v==='bpd_review') return renderBpdReview();
+  if(v==='template') return renderTemplateList();
+  if(v==='pengguna') return renderPengguna();
+  if(v==='penomoran') return renderPenomoran();
+  if(v==='pengaturan') return renderPengaturan();
+  if(v==='laporan') return renderLaporan();
+  setTopbar('Halaman tidak ditemukan');
+  document.getElementById('content').innerHTML = '<div class="empty-state">Menu tidak tersedia untuk role Anda.</div>';
+}
+
+function render(html){ document.getElementById('app').innerHTML = html; }
+
+/* ============== DASHBOARD ============== */
+function renderDashboard(){
+  setTopbar('Dashboard', 'Ringkasan aktivitas administrasi desa');
+  const role = ST.session.role;
+  const myLetters = role==='admin' ? ST.letters : ST.letters.filter(l=>l.dibuat_oleh===ST.session.id);
+  const now = new Date();
+  const bulanIni = ST.letters.filter(l=>{
+    const d = new Date(l.tanggal_dibuat); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).length;
+  const pending = role==='bpd'
+    ? ST.letters.filter(l=>l.jenis_surat==='perdes' && l.status==='bpd_review').length
+    : ST.letters.filter(l=>l.status==='diajukan' || (l.jenis_surat==='perdes' && l.status==='bpd_review')).length;
+  const arsipTotal = ST.letters.filter(l=>l.status==='disetujui').length;
+  const draftSaya = myLetters.filter(l=>l.status==='draft').length;
+
+  let metrics = '<div class="grid grid-4">'+
+    metricCard('Surat bulan ini', bulanIni)+
+    metricCard(role==='perangkat' ? 'Draft saya' : 'Menunggu persetujuan', role==='perangkat' ? draftSaya : pending)+
+    metricCard('Total arsip disetujui', arsipTotal)+
+    metricCard('Total pengguna aktif', ST.users.filter(u=>u.aktif).length)+
+  '</div>';
+
+  const recent = ST.letters.slice().sort((a,b)=> new Date(b.updated_at||b.tanggal_dibuat) - new Date(a.updated_at||a.tanggal_dibuat)).slice(0,6);
+  let recentRows = recent.map(l=>{
+    const pembuat = ST.users.find(u=>u.id===l.dibuat_oleh);
+    return '<tr><td>'+escapeHtml(l.judul||l.fields.perihal||'(tanpa judul)')+'</td><td>'+(JENIS_LABEL[l.jenis_surat]||l.jenis_surat)+'</td><td>'+(pembuat?escapeHtml(pembuat.nama_lengkap):'-')+'</td><td><span class="badge badge-'+l.status+'">'+STATUS_LABEL[l.status]+'</span></td></tr>';
+  }).join('');
+  if(!recent.length) recentRows = '<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);padding:20px;">Belum ada aktivitas surat.</td></tr>';
+
+  let quick = '';
+  if(role!=='bpd'){
+    quick = '<button class="btn btn-primary" id="qkBuat">+ Buat Surat Baru</button>';
+  }
+
+  document.getElementById('content').innerHTML =
+    metrics +
+    '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin:0;">Aktivitas terbaru</div>'+quick+'</div>'+
+    '<table class="tbl"><thead><tr><th>Perihal</th><th>Jenis</th><th>Dibuat oleh</th><th>Status</th></tr></thead><tbody>'+recentRows+'</tbody></table>'+
+    '</div>';
+  const qb = document.getElementById('qkBuat');
+  if(qb) qb.addEventListener('click', ()=>{ ST.view='surat_buat'; renderApp(); });
+}
+function metricCard(label, value){
+  return '<div class="metric"><div class="m-label">'+label+'</div><div class="m-value">'+value+'</div></div>';
+}
+
+/* ============== BUAT SURAT (create / edit draft) ============== */
+function renderSuratBuat(){
+  const editing = ST.editId ? ST.letters.find(l=>l.id===ST.editId) : null;
+  setTopbar(editing? 'Edit Surat (Draft)' : 'Buat Surat Baru', 'Pilih jenis surat, isi data, lihat pratinjau otomatis');
+
+  const jenisOptions = Object.keys(JENIS_LABEL).filter(j => ST.templates.some(t=>t.jenis_surat===j && t.aktif))
+    .map(j=>'<option value="'+j+'">'+JENIS_LABEL[j]+'</option>').join('');
+
+  document.getElementById('content').innerHTML =
+    '<div class="split">'+
+      '<div class="card">'+
+        '<div class="section-title">Data surat</div>'+
+        '<div class="field"><label>Jenis surat</label><select id="fJenis"><option value="">- pilih jenis surat -</option>'+jenisOptions+'</select></div>'+
+        '<div class="field"><label>Template</label><select id="fTemplate" disabled><option value="">- pilih jenis surat dahulu -</option></select></div>'+
+        '<div id="dynFields"></div>'+
+        '<div class="row-actions" style="margin-top:16px;">'+
+          '<button class="btn btn-outline" id="btnSaveDraft">Simpan Draft</button>'+
+          '<button class="btn btn-primary" id="btnAjukan">Ajukan ke Kepala Desa</button>'+
+        '</div>'+
+        '<div class="help">Nomor surat dibuat otomatis oleh sistem saat surat disetujui Kepala Desa. Anda tidak perlu mengisi nomor.</div>'+
+      '</div>'+
+      '<div class="sticky"><div class="section-title">Pratinjau surat</div><div id="docPreview"></div></div>'+
+    '</div>';
+
+  const jenisSel = document.getElementById('fJenis');
+  const tplSel = document.getElementById('fTemplate');
+  const dynBox = document.getElementById('dynFields');
+  let currentFields = editing ? Object.assign({}, editing.fields) : {};
+
+  function buildTemplateOptions(jenis){
+    const opts = ST.templates.filter(t=>t.jenis_surat===jenis && t.aktif);
+    tplSel.disabled = opts.length===0;
+    tplSel.innerHTML = (opts.length? '' : '<option value="">- tidak ada template aktif -</option>') +
+      opts.map(t=>'<option value="'+t.id+'">'+escapeHtml(t.nama_template)+'</option>').join('');
+  }
+  function buildDynFields(template){
+    if(!template){ dynBox.innerHTML=''; return; }
+    const vars = extractVars(template.isi_html);
+    const fixed = [
+      {key:'perihal', label:'Perihal', type:'text'},
+      {key:'nama_penerima', label:'Ditujukan kepada (kosongkan jika tidak perlu)', type:'text'},
+      {key:'tanggal_surat', label:'Tanggal surat', type:'date'},
+      {key:'lampiran', label:'Lampiran', type:'text'}
+    ];
+    let html = '';
+    fixed.forEach(f=>{
+      const val = currentFields[f.key] || (f.key==='tanggal_surat' ? new Date().toISOString().slice(0,10) : '');
+      html += '<div class="field"><label>'+f.label+'</label><input type="'+f.type+'" data-field="'+f.key+'" value="'+escapeHtml(val)+'"></div>';
+    });
+    vars.filter(v=>!fixed.some(f=>f.key===v)).forEach(v=>{
+      const label = v.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+      const val = currentFields[v] || '';
+      if(v==='isi_surat'){
+        html += '<div class="field"><label>'+label+'</label><textarea data-field="'+v+'" rows="6" placeholder="Tulis isi/uraian surat di sini...">'+escapeHtml(val)+'</textarea></div>';
+      } else {
+        html += '<div class="field"><label>'+label+'</label><input type="text" data-field="'+v+'" value="'+escapeHtml(val)+'"></div>';
+      }
+    });
+    dynBox.innerHTML = html;
+    dynBox.querySelectorAll('[data-field]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{ currentFields[inp.getAttribute('data-field')] = inp.value; updatePreview(); });
+    });
+  }
+  function getSelectedTemplate(){ return ST.templates.find(t=>t.id===tplSel.value); }
+  function updatePreview(){
+    const tpl = getSelectedTemplate();
+    const fakeLetter = {
+      jenis_surat: jenisSel.value, fields: currentFields,
+      nomor_lengkap: editing ? editing.nomor_lengkap : null,
+      status: editing ? editing.status : 'draft'
+    };
+    document.getElementById('docPreview').innerHTML = tpl ? renderDocPreview(fakeLetter, tpl, ST.profile) :
+      '<div class="doc-frame" style="display:flex;align-items:center;justify-content:center;color:#999;font-family:var(--sans);">Pilih jenis surat & template untuk melihat pratinjau</div>';
+  }
+
+  jenisSel.addEventListener('change', ()=>{ buildTemplateOptions(jenisSel.value); tplSel.value=''; buildDynFields(null); updatePreview(); });
+  tplSel.addEventListener('change', ()=>{ buildDynFields(getSelectedTemplate()); updatePreview(); });
+
+  if(editing){
+    jenisSel.value = editing.jenis_surat;
+    buildTemplateOptions(editing.jenis_surat);
+    tplSel.value = editing.template_id;
+    buildDynFields(getSelectedTemplate());
+  }
+  updatePreview();
+
+  async function persist(status){
+    if(!jenisSel.value){ toast('Pilih jenis surat terlebih dahulu.'); return; }
+    if(!tplSel.value){ toast('Pilih template surat terlebih dahulu.'); return; }
+    if(!currentFields.perihal){ toast('Perihal surat wajib diisi.'); return; }
+    const isPerdes = jenisSel.value === 'perdes';
+    const newStatus = status==='ajukan' ? (isPerdes? 'diajukan' : 'diajukan') : 'draft';
+    if(editing){
+      editing.jenis_surat = jenisSel.value; editing.template_id = tplSel.value; editing.fields = currentFields;
+      editing.judul = currentFields.perihal; editing.status = newStatus; editing.updated_at = new Date().toISOString();
+    } else {
+      ST.letters.push({
+        id: uid(), jenis_surat: jenisSel.value, template_id: tplSel.value, fields: currentFields,
+        judul: currentFields.perihal, status: newStatus, dibuat_oleh: ST.session.id,
+        tanggal_dibuat: new Date().toISOString(), updated_at: new Date().toISOString(),
+        nomor_urut:null, kode_surat:null, nomor_lengkap:null, catatan:''
+      });
+    }
+    await saveLetters();
+    toast(status==='ajukan' ? 'Surat berhasil diajukan.' : 'Draft tersimpan.');
+    ST.editId = null; ST.view = 'surat_saya'; renderApp();
+  }
+  document.getElementById('btnSaveDraft').addEventListener('click', ()=>persist('draft'));
+  document.getElementById('btnAjukan').addEventListener('click', ()=>persist('ajukan'));
+}
+
+/* ============== SHARED: VIEW / PRINT MODAL ============== */
+function openLetterModal(letter, actionsHtml){
+  const tpl = ST.templates.find(t=>t.id===letter.template_id);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = '<div class="modal-box modal-wide">'+
+    '<div class="modal-head"><h3>'+escapeHtml(letter.judul||'Pratinjau Surat')+'</h3><button class="modal-close">&times;</button></div>'+
+    '<div class="modal-body"><div id="modalDocArea">'+renderDocPreview(letter, tpl, ST.profile)+'</div></div>'+
+    '<div class="modal-foot">'+(actionsHtml||'')+'<button class="btn btn-outline" id="btnPrintDoc">Cetak / PDF</button><button class="btn btn-ghost" id="btnCloseModal">Tutup</button></div>'+
+  '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('.modal-close').addEventListener('click', ()=>overlay.remove());
+  overlay.querySelector('#btnCloseModal').addEventListener('click', ()=>overlay.remove());
+  overlay.querySelector('#btnPrintDoc').addEventListener('click', ()=>{
+    const w = window.open('', '_blank');
+    w.document.write('<html><head><title>'+escapeHtml(letter.judul||'Surat')+'</title><style>body{font-family:Georgia,serif;padding:30px;}@page{margin:18mm;}.kop{display:flex;align-items:center;gap:16px;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:14px;}.kop img{width:62px;height:62px;object-fit:contain;}.kop-text{flex:1;text-align:center;}.kop-text .l1{font-size:13px;font-weight:700;text-transform:uppercase;}.kop-text .l2{font-size:15px;font-weight:700;text-transform:uppercase;}.kop-text .l3{font-size:11px;margin-top:2px;}.doc-meta table td{padding:1px 6px 1px 0;}.doc-body{white-space:pre-wrap;margin:14px 0;}.doc-sign{display:flex;justify-content:flex-end;margin-top:26px;}.sign-block{text-align:center;width:240px;}.ttd{height:54px;object-fit:contain;margin:6px 0;}</style></head><body>'+document.getElementById('modalDocArea').innerHTML+'</body></html>');
+    w.document.close(); w.focus(); setTimeout(()=>w.print(), 300);
+  });
+  return overlay;
+}
+
+/* ============== SURAT SAYA ============== */
+function renderSuratSaya(){
+  setTopbar('Surat Saya', 'Daftar surat yang Anda buat');
+  const mine = ST.letters.filter(l=>l.dibuat_oleh===ST.session.id).sort((a,b)=> new Date(b.updated_at)-new Date(a.updated_at));
+  document.getElementById('content').innerHTML = '<div class="card">'+
+    (mine.length ? renderLetterTable(mine, true) : '<div class="empty-state">Anda belum membuat surat. Mulai dari menu <b>Buat Surat Baru</b>.</div>')+
+  '</div>';
+  bindLetterTableActions(mine, true);
+}
+
+function renderLetterTable(list, ownerView){
+  let rows = list.map(l=>{
+    const pembuat = ST.users.find(u=>u.id===l.dibuat_oleh);
+    return '<tr>'+
+      '<td>'+escapeHtml(l.judul||'(tanpa judul)')+(l.nomor_lengkap?'<span class="nomor-pill">'+l.nomor_lengkap+'</span>':'')+'</td>'+
+      '<td>'+(JENIS_LABEL[l.jenis_surat]||l.jenis_surat)+'</td>'+
+      (ownerView? '' : '<td>'+(pembuat?escapeHtml(pembuat.nama_lengkap):'-')+'</td>')+
+      '<td>'+fmtTanggalID(l.tanggal_dibuat)+'</td>'+
+      '<td><span class="badge badge-'+l.status+'">'+STATUS_LABEL[l.status]+'</span></td>'+
+      '<td class="row-actions">'+
+        '<button class="btn btn-sm btn-outline" data-view="'+l.id+'">Lihat</button>'+
+        (ownerView && l.status==='draft' ? '<button class="btn btn-sm btn-outline" data-edit="'+l.id+'">Edit</button><button class="btn btn-sm btn-danger" data-del="'+l.id+'">Hapus</button>' : '')+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  return '<table class="tbl"><thead><tr><th>Perihal</th><th>Jenis</th>'+(ownerView?'':'<th>Dibuat oleh</th>')+'<th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function bindLetterTableActions(list, ownerView){
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click', ()=>{
+    const l = list.find(x=>x.id===b.getAttribute('data-view')); openLetterModal(l);
+  }));
+  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
+    ST.editId = b.getAttribute('data-edit'); ST.view='surat_buat'; renderApp();
+  }));
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Hapus draft surat ini?')) return;
+    ST.letters = ST.letters.filter(x=>x.id!==b.getAttribute('data-del'));
+    await saveLetters(); toast('Draft dihapus.'); renderApp();
+  }));
+}
+
+/* ============== ARSIP & PENCARIAN ============== */
+function renderArsip(){
+  setTopbar('Arsip & Pencarian', 'Surat yang sudah final/disetujui');
+  const isBpd = ST.session.role==='bpd';
+  const base = ST.letters.filter(l=> l.status==='disetujui' && (!isBpd || l.jenis_surat==='perdes'));
+  document.getElementById('content').innerHTML =
+    '<div class="card">'+
+      '<div class="toolbar">'+
+        '<input type="text" id="arsipQ" placeholder="Cari kata kunci / perihal...">'+
+        '<select id="arsipJenis"><option value="">Semua jenis</option>'+Object.keys(JENIS_LABEL).map(j=>'<option value="'+j+'">'+JENIS_LABEL[j]+'</option>').join('')+'</select>'+
+        '<input type="date" id="arsipDari"><span style="font-size:12px;color:var(--ink-soft);">s/d</span><input type="date" id="arsipSampai">'+
+      '</div>'+
+      '<div id="arsipResult"></div>'+
+    '</div>';
+  function doFilter(){
+    const q = document.getElementById('arsipQ').value.toLowerCase();
+    const jenis = document.getElementById('arsipJenis').value;
+    const dari = document.getElementById('arsipDari').value;
+    const sampai = document.getElementById('arsipSampai').value;
+    let res = base.filter(l=>{
+      if(jenis && l.jenis_surat!==jenis) return false;
+      if(q && !( (l.judul||'').toLowerCase().includes(q) || (l.nomor_lengkap||'').toLowerCase().includes(q) )) return false;
+      if(dari && new Date(l.tanggal_dibuat) < new Date(dari)) return false;
+      if(sampai && new Date(l.tanggal_dibuat) > new Date(sampai+'T23:59:59')) return false;
+      return true;
+    }).sort((a,b)=> new Date(b.tanggal_dibuat)-new Date(a.tanggal_dibuat));
+    document.getElementById('arsipResult').innerHTML = res.length ? renderLetterTable(res, false) :
+      '<div class="empty-state">Tidak ada surat yang sesuai pencarian.</div>';
+    bindLetterTableActions(res, false);
+  }
+  ['arsipQ','arsipJenis','arsipDari','arsipSampai'].forEach(id=> document.getElementById(id).addEventListener('input', doFilter));
+  doFilter();
+}
+
+/* ============== PERSETUJUAN (Kepala Desa / Admin) ============== */
+function renderPersetujuan(){
+  setTopbar('Surat Menunggu Persetujuan', 'Setujui atau tolak surat yang diajukan perangkat desa');
+  const list = ST.letters.filter(l=> l.status==='diajukan' && l.jenis_surat!=='perdes')
+    .concat(ST.letters.filter(l=> l.jenis_surat==='perdes' && l.status==='diajukan'))
+    .sort((a,b)=> new Date(a.tanggal_dibuat)-new Date(b.tanggal_dibuat));
+  if(!list.length){
+    document.getElementById('content').innerHTML = '<div class="card"><div class="empty-state">Tidak ada surat yang menunggu persetujuan saat ini.</div></div>';
+    return;
+  }
+  let rows = list.map(l=>{
+    const pembuat = ST.users.find(u=>u.id===l.dibuat_oleh);
+    return '<tr><td>'+escapeHtml(l.judul)+'</td><td>'+(JENIS_LABEL[l.jenis_surat]||l.jenis_surat)+'</td><td>'+(pembuat?escapeHtml(pembuat.nama_lengkap):'-')+'</td><td>'+fmtTanggalID(l.tanggal_dibuat)+'</td>'+
+      '<td class="row-actions"><button class="btn btn-sm btn-outline" data-review="'+l.id+'">Review</button></td></tr>';
+  }).join('');
+  document.getElementById('content').innerHTML = '<div class="card"><table class="tbl"><thead><tr><th>Perihal</th><th>Jenis</th><th>Pengaju</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  document.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click', ()=>{
+    const l = list.find(x=>x.id===b.getAttribute('data-review'));
+    const isPerdes = l.jenis_surat==='perdes';
+    const actions = isPerdes
+      ? '<button class="btn btn-primary" id="actLanjutBpd">Setuju &amp; Teruskan ke BPD</button><button class="btn btn-danger" id="actTolak">Tolak</button>'
+      : '<button class="btn btn-primary" id="actSetuju">Setujui (buat nomor otomatis)</button><button class="btn btn-danger" id="actTolak">Tolak</button>';
+    const overlay = openLetterModal(l, actions);
+    const tolakBtn = overlay.querySelector('#actTolak');
+    if(tolakBtn) tolakBtn.addEventListener('click', async ()=>{
+      const catatan = prompt('Catatan penolakan (akan dilihat pembuat surat):','');
+      if(catatan===null) return;
+      l.status='ditolak'; l.catatan=catatan; l.updated_at=new Date().toISOString();
+      await saveLetters(); overlay.remove(); toast('Surat ditolak.'); renderApp();
+    });
+    const setujuBtn = overlay.querySelector('#actSetuju');
+    if(setujuBtn) setujuBtn.addEventListener('click', async ()=>{
+      const nm = await generateNomor(l.jenis_surat, l.fields.tanggal_surat);
+      l.nomor_urut=nm.nomor_urut; l.kode_surat=nm.kode_surat; l.nomor_lengkap=nm.nomor_lengkap;
+      l.status='disetujui'; l.updated_at=new Date().toISOString();
+      await saveLetters(); overlay.remove(); toast('Surat disetujui. Nomor: '+nm.nomor_lengkap); renderApp();
+    });
+    const lanjutBtn = overlay.querySelector('#actLanjutBpd');
+    if(lanjutBtn) lanjutBtn.addEventListener('click', async ()=>{
+      l.status='bpd_review'; l.updated_at=new Date().toISOString();
+      await saveLetters(); overlay.remove(); toast('Rancangan Perdes diteruskan ke BPD untuk ditinjau.'); renderApp();
+    });
+  }));
+}
+
+/* ============== BPD REVIEW (Perdes) ============== */
+function renderBpdReview(){
+  setTopbar('Review Peraturan Desa', 'Tinjau rancangan Perdes yang diteruskan Kepala Desa');
+  const list = ST.letters.filter(l=> l.jenis_surat==='perdes' && l.status==='bpd_review')
+    .sort((a,b)=> new Date(a.tanggal_dibuat)-new Date(b.tanggal_dibuat));
+  if(!list.length){
+    document.getElementById('content').innerHTML = '<div class="card"><div class="empty-state">Belum ada rancangan Perdes yang perlu ditinjau.</div></div>';
+    return;
+  }
+  let rows = list.map(l=>'<tr><td>'+escapeHtml(l.judul)+'</td><td>'+fmtTanggalID(l.tanggal_dibuat)+'</td>'+
+    '<td class="row-actions"><button class="btn btn-sm btn-outline" data-bpd="'+l.id+'">Review</button></td></tr>').join('');
+  document.getElementById('content').innerHTML = '<div class="card"><table class="tbl"><thead><tr><th>Perihal</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  document.querySelectorAll('[data-bpd]').forEach(b=>b.addEventListener('click', ()=>{
+    const l = list.find(x=>x.id===b.getAttribute('data-bpd'));
+    const actions = '<button class="btn btn-primary" id="actBpdSetuju">Setujui Perdes (final, buat nomor)</button><button class="btn btn-danger" id="actBpdTolak">Beri Catatan / Tolak</button>';
+    const overlay = openLetterModal(l, actions);
+    overlay.querySelector('#actBpdTolak').addEventListener('click', async ()=>{
+      const catatan = prompt('Catatan dari BPD:',''); if(catatan===null) return;
+      l.status='ditolak'; l.catatan='[BPD] '+catatan; l.updated_at=new Date().toISOString();
+      await saveLetters(); overlay.remove(); toast('Catatan dikirim, Perdes dikembalikan.'); renderApp();
+    });
+    overlay.querySelector('#actBpdSetuju').addEventListener('click', async ()=>{
+      const nm = await generateNomor(l.jenis_surat, l.fields.tanggal_surat);
+      l.nomor_urut=nm.nomor_urut; l.kode_surat=nm.kode_surat; l.nomor_lengkap=nm.nomor_lengkap;
+      l.status='disetujui'; l.updated_at=new Date().toISOString();
+      await saveLetters(); overlay.remove(); toast('Perdes final. Nomor: '+nm.nomor_lengkap); renderApp();
+    });
+  }));
+}
+
+/* ============== TEMPLATE SURAT (Admin) ============== */
+function renderTemplateList(){
+  setTopbar('Template Surat', 'Admin dapat membuat, mengubah, dan menonaktifkan template surat');
+  let rows = ST.templates.map(t=>{
+    return '<tr><td>'+escapeHtml(t.nama_template)+'</td><td>'+(JENIS_LABEL[t.jenis_surat]||t.jenis_surat)+'</td>'+
+      '<td><label class="switch"><input type="checkbox" data-toggle="'+t.id+'" '+(t.aktif?'checked':'')+'> '+(t.aktif?'Aktif':'Nonaktif')+'</label></td>'+
+      '<td class="row-actions"><button class="btn btn-sm btn-outline" data-edittpl="'+t.id+'">Edit</button><button class="btn btn-sm btn-outline" data-duptpl="'+t.id+'">Duplikasi</button><button class="btn btn-sm btn-danger" data-deltpl="'+t.id+'">Hapus</button></td></tr>';
+  }).join('');
+  document.getElementById('content').innerHTML = '<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin:0;">Daftar template</div><button class="btn btn-primary btn-sm" id="btnNewTpl">+ Template Baru</button></div>'+
+    (ST.templates.length ? '<table class="tbl"><thead><tr><th>Nama Template</th><th>Jenis Surat</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table>' : '<div class="empty-state">Belum ada template.</div>')+
+  '</div>';
+  document.getElementById('btnNewTpl').addEventListener('click', ()=>openTemplateEditor(null));
+  document.querySelectorAll('[data-edittpl]').forEach(b=>b.addEventListener('click', ()=>openTemplateEditor(ST.templates.find(t=>t.id===b.getAttribute('data-edittpl')))));
+  document.querySelectorAll('[data-duptpl]').forEach(b=>b.addEventListener('click', async ()=>{
+    const t = ST.templates.find(t=>t.id===b.getAttribute('data-duptpl'));
+    ST.templates.push(Object.assign({}, t, {id:uid(), nama_template:t.nama_template+' (Copy)'}));
+    await saveTemplates(); toast('Template diduplikasi.'); renderApp();
+  }));
+  document.querySelectorAll('[data-deltpl]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Hapus template ini? Surat yang sudah pernah dibuat dari template ini tidak terhapus.')) return;
+    ST.templates = ST.templates.filter(t=>t.id!==b.getAttribute('data-deltpl'));
+    await saveTemplates(); toast('Template dihapus.'); renderApp();
+  }));
+  document.querySelectorAll('[data-toggle]').forEach(cb=>cb.addEventListener('change', async ()=>{
+    const t = ST.templates.find(t=>t.id===cb.getAttribute('data-toggle'));
+    t.aktif = cb.checked; await saveTemplates(); renderApp();
+  }));
+}
+
+function openTemplateEditor(template){
+  const isNew = !template;
+  const draft = template ? JSON.parse(JSON.stringify(template)) : {id:uid(), nama_template:'', jenis_surat:'surat_keluar', isi_html:'', kop_custom:'', aktif:true};
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML = '<div class="modal-box modal-wide">'+
+    '<div class="modal-head"><h3>'+(isNew?'Template Baru':'Edit Template')+'</h3><button class="modal-close">&times;</button></div>'+
+    '<div class="modal-body"><div class="split">'+
+      '<div>'+
+        '<div class="field"><label>Nama template</label><input type="text" id="tplNama" value="'+escapeHtml(draft.nama_template)+'"></div>'+
+        '<div class="field"><label>Jenis surat</label><select id="tplJenis">'+Object.keys(JENIS_LABEL).map(j=>'<option value="'+j+'" '+(draft.jenis_surat===j?'selected':'')+'>'+JENIS_LABEL[j]+'</option>').join('')+'</select></div>'+
+        '<div class="field"><label>Isi / badan surat (gunakan variabel di bawah)</label>'+
+          '<div>'+['perihal','nama_penerima','isi_surat','lampiran','tempat'].map(v=>'<button type="button" class="var-tag" data-insertvar="{{'+v+'}}">{{'+v+'}}</button>').join('')+'</div>'+
+          '<textarea id="tplIsi" class="code">'+escapeHtml(draft.isi_html)+'</textarea>'+
+          '<div class="help">Variabel otomatis tersedia juga: {{nama_desa}}, {{kecamatan}}, {{kabupaten}}, {{nomor_surat}}, {{tanggal}}, {{kepala_desa}}, {{tempat}} &mdash; akan terisi sendiri oleh sistem.</div>'+
+        '</div>'+
+        '<div class="field"><label>Kop surat khusus (opsional, biarkan kosong untuk pakai kop surat default desa)</label><textarea id="tplKop" class="code" placeholder="Kosongkan untuk pakai kop surat default dari Pengaturan &gt; Profil &amp; Kop Surat"></textarea></div>'+
+        '<label class="switch"><input type="checkbox" id="tplAktif" '+(draft.aktif?'checked':'')+'> Template aktif (bisa dipilih perangkat desa)</label>'+
+      '</div>'+
+      '<div><div class="section-title">Pratinjau</div><div id="tplPreview"></div></div>'+
+    '</div></div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" id="tplCancel">Batal</button><button class="btn btn-primary" id="tplSave">Simpan Template</button></div>'+
+  '</div>';
+  document.body.appendChild(overlay);
+  function updateTplPreview(){
+    draft.isi_html = document.getElementById('tplIsi').value;
+    draft.kop_custom = document.getElementById('tplKop').value;
+    const fakeLetter = {jenis_surat:draft.jenis_surat, fields:{perihal:'(contoh) Pemberitahuan Kegiatan', nama_penerima:'Bapak/Ibu Warga', isi_surat:'(Ini contoh isi surat untuk pratinjau template.)'}, status:'draft', nomor_lengkap:null};
+    document.getElementById('tplPreview').innerHTML = renderDocPreview(fakeLetter, draft, ST.profile);
+  }
+  overlay.querySelectorAll('[data-insertvar]').forEach(btn=>btn.addEventListener('click', ()=>{
+    const ta = document.getElementById('tplIsi'); const start=ta.selectionStart, end=ta.selectionEnd;
+    ta.value = ta.value.slice(0,start)+btn.getAttribute('data-insertvar')+ta.value.slice(end);
+    updateTplPreview();
+  }));
+  document.getElementById('tplIsi').addEventListener('input', updateTplPreview);
+  document.getElementById('tplKop').addEventListener('input', updateTplPreview);
+  document.getElementById('tplKop').value = draft.kop_custom;
+  updateTplPreview();
+  overlay.querySelector('.modal-close').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('tplCancel').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('tplSave').addEventListener('click', async ()=>{
+    draft.nama_template = document.getElementById('tplNama').value.trim();
+    draft.jenis_surat = document.getElementById('tplJenis').value;
+    draft.isi_html = document.getElementById('tplIsi').value;
+    draft.kop_custom = document.getElementById('tplKop').value;
+    draft.aktif = document.getElementById('tplAktif').checked;
+    if(!draft.nama_template){ toast('Nama template wajib diisi.'); return; }
+    if(isNew){ ST.templates.push(draft); } else { Object.assign(template, draft); }
+    await saveTemplates(); overlay.remove(); toast('Template tersimpan.'); renderApp();
+  });
+}
+
+/* ============== MANAJEMEN PENGGUNA (Admin) ============== */
+function renderPengguna(){
+  setTopbar('Manajemen Pengguna', 'Tambah akun, atur role, dan reset password');
+  let rows = ST.users.map(u=>{
+    return '<tr><td>'+escapeHtml(u.nama_lengkap)+'</td><td>'+escapeHtml(u.username)+'</td><td>'+escapeHtml(u.jabatan)+'</td><td>'+ROLE_LABEL[u.role]+'</td>'+
+      '<td><label class="switch"><input type="checkbox" data-toggleuser="'+u.id+'" '+(u.aktif?'checked':'')+'> '+(u.aktif?'Aktif':'Nonaktif')+'</label></td>'+
+      '<td class="row-actions"><button class="btn btn-sm btn-outline" data-edituser="'+u.id+'">Edit</button><button class="btn btn-sm btn-outline" data-resetpw="'+u.id+'">Reset Password</button><button class="btn btn-sm btn-danger" data-deluser="'+u.id+'">Hapus</button></td></tr>';
+  }).join('');
+  document.getElementById('content').innerHTML = '<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin:0;">Daftar pengguna</div><button class="btn btn-primary btn-sm" id="btnNewUser">+ Tambah Pengguna</button></div>'+
+    '<table class="tbl"><thead><tr><th>Nama</th><th>Username</th><th>Jabatan</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="help" style="margin-top:8px;">Log aktivitas detail per pengguna dapat dilihat melalui histori surat pada menu Laporan.</div>'+
+  '</div>';
+  document.getElementById('btnNewUser').addEventListener('click', ()=>openUserEditor(null));
+  document.querySelectorAll('[data-edituser]').forEach(b=>b.addEventListener('click', ()=>openUserEditor(ST.users.find(u=>u.id===b.getAttribute('data-edituser')))));
+  document.querySelectorAll('[data-deluser]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(b.getAttribute('data-deluser')===ST.session.id){ toast('Tidak dapat menghapus akun yang sedang digunakan.'); return; }
+    if(!confirm('Hapus pengguna ini?')) return;
+    ST.users = ST.users.filter(u=>u.id!==b.getAttribute('data-deluser'));
+    await saveUsers(); toast('Pengguna dihapus.'); renderApp();
+  }));
+  document.querySelectorAll('[data-resetpw]').forEach(b=>b.addEventListener('click', async ()=>{
+    const u = ST.users.find(u=>u.id===b.getAttribute('data-resetpw'));
+    const np = prompt('Password baru untuk '+u.nama_lengkap+':',''); if(!np) return;
+    u.password = np; await saveUsers(); toast('Password berhasil direset.');
+  }));
+  document.querySelectorAll('[data-toggleuser]').forEach(cb=>cb.addEventListener('change', async ()=>{
+    const u = ST.users.find(u=>u.id===cb.getAttribute('data-toggleuser'));
+    if(u.id===ST.session.id){ toast('Tidak dapat menonaktifkan akun sendiri.'); renderApp(); return; }
+    u.aktif = cb.checked; await saveUsers(); renderApp();
+  }));
+}
+function openUserEditor(user){
+  const isNew = !user;
+  const draft = user ? Object.assign({}, user) : {id:uid(), nama_lengkap:'', username:'', password:'', jabatan:'', role:'perangkat', aktif:true};
+  const overlay = document.createElement('div'); overlay.className='modal-overlay';
+  overlay.innerHTML = '<div class="modal-box">'+
+    '<div class="modal-head"><h3>'+(isNew?'Tambah Pengguna':'Edit Pengguna')+'</h3><button class="modal-close">&times;</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="field"><label>Nama lengkap</label><input id="uNama" value="'+escapeHtml(draft.nama_lengkap)+'"></div>'+
+      '<div class="field"><label>Username</label><input id="uUser" value="'+escapeHtml(draft.username)+'"></div>'+
+      (isNew? '<div class="field"><label>Password</label><input id="uPass" type="text" value=""></div>' : '')+
+      '<div class="field"><label>Jabatan</label><input id="uJabatan" value="'+escapeHtml(draft.jabatan)+'" placeholder="Kaur, Kasi, Kepala Dusun, dll"></div>'+
+      '<div class="field"><label>Role</label><select id="uRole">'+Object.keys(ROLE_LABEL).map(r=>'<option value="'+r+'" '+(draft.role===r?'selected':'')+'>'+ROLE_LABEL[r]+'</option>').join('')+'</select></div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" id="uCancel">Batal</button><button class="btn btn-primary" id="uSave">Simpan</button></div>'+
+  '</div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('.modal-close').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('uCancel').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('uSave').addEventListener('click', async ()=>{
+    const nama = document.getElementById('uNama').value.trim();
+    const username = document.getElementById('uUser').value.trim();
+    if(!nama || !username){ toast('Nama dan username wajib diisi.'); return; }
+    if(ST.users.some(u=>u.username.toLowerCase()===username.toLowerCase() && u.id!==draft.id)){ toast('Username sudah digunakan.'); return; }
+    draft.nama_lengkap = nama; draft.username = username; draft.jabatan = document.getElementById('uJabatan').value.trim();
+    draft.role = document.getElementById('uRole').value;
+    if(isNew){
+      const pw = document.getElementById('uPass').value.trim();
+      if(!pw){ toast('Password wajib diisi.'); return; }
+      draft.password = pw; ST.users.push(draft);
+    } else { Object.assign(user, draft); }
+    await saveUsers(); overlay.remove(); toast('Pengguna tersimpan.'); renderApp();
+  });
+}
+
+/* ============== PENGATURAN PENOMORAN (Admin) ============== */
+function renderPenomoran(){
+  setTopbar('Pengaturan Penomoran Surat', 'Format: [nomor urut]/[kode surat]/TK/[bulan romawi]/[tahun]');
+  let rows = ST.kodeSurat.map((k,i)=>'<tr><td><input type="text" data-kode-idx="'+i+'" value="'+escapeHtml(k.kode)+'" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:6px;"></td>'+
+    '<td>'+(JENIS_LABEL[k.jenis_surat]||k.jenis_surat)+'</td><td>'+escapeHtml(k.label)+'</td>'+
+    '<td><button class="btn btn-sm btn-danger" data-delkode="'+i+'">Hapus</button></td></tr>').join('');
+  document.getElementById('content').innerHTML =
+    '<div class="card"><div class="section-title">Status penomoran tahun aktif</div>'+
+      '<div class="grid grid-2">'+metricCard('Tahun aktif', ST.numbering.tahun_aktif)+metricCard('Nomor urut terakhir', ST.numbering.counter)+'</div>'+
+      '<div class="row-actions" style="margin-top:14px;"><button class="btn btn-outline" id="btnResetTahun">Reset Nomor Urut (Ganti Tahun)</button></div>'+
+      '<div class="help">Nomor urut berjalan terus sepanjang tahun dan tidak direset antar jenis surat. Sistem otomatis reset ke 001 saat tanggal surat memasuki tahun baru; gunakan tombol di atas untuk reset manual bila diperlukan.</div>'+
+    '</div>'+
+    '<div class="card"><div class="section-title">Kode surat per jenis dokumen</div>'+
+      '<table class="tbl"><thead><tr><th>Kode</th><th>Jenis Surat</th><th>Keterangan</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<button class="btn btn-outline btn-sm" id="btnAddKode" style="margin-top:10px;">+ Tambah Kode Surat</button>'+
+      '<div class="row-actions" style="margin-top:14px;"><button class="btn btn-primary" id="btnSaveKode">Simpan Kode Surat</button></div>'+
+      '<div class="help">Contoh hasil format: 001/SK/TK/I/2026 = Surat Keputusan ke-1, bulan Januari 2026.</div>'+
+    '</div>';
+  document.getElementById('btnResetTahun').addEventListener('click', async ()=>{
+    if(!confirm('Reset nomor urut ke 001 untuk tahun aktif saat ini?')) return;
+    ST.numbering.counter = 0; ST.numbering.tahun_aktif = new Date().getFullYear();
+    await saveNumbering(); toast('Nomor urut telah direset.'); renderApp();
+  });
+  document.getElementById('btnAddKode').addEventListener('click', ()=>{
+    ST.kodeSurat.push({kode:'XX', jenis_surat:'surat_keluar', label:'Jenis baru'}); renderApp();
+  });
+  document.querySelectorAll('[data-delkode]').forEach(b=>b.addEventListener('click', ()=>{
+    ST.kodeSurat.splice(parseInt(b.getAttribute('data-delkode')),1); renderApp();
+  }));
+  document.getElementById('btnSaveKode').addEventListener('click', async ()=>{
+    document.querySelectorAll('[data-kode-idx]').forEach(inp=>{
+      ST.kodeSurat[parseInt(inp.getAttribute('data-kode-idx'))].kode = inp.value.trim().toUpperCase();
+    });
+    await saveKodeSurat(); toast('Kode surat tersimpan.'); renderApp();
+  });
+}
+
+/* ============== PENGATURAN PROFIL & KOP SURAT (Admin) ============== */
+function renderPengaturan(){
+  setTopbar('Profil Desa & Kop Surat', 'Data ini akan otomatis tampil di kop surat seluruh dokumen');
+  const p = ST.profile;
+  document.getElementById('content').innerHTML = '<div class="split">'+
+    '<div class="card">'+
+      '<div class="section-title">Profil desa</div>'+
+      field('pNamaDesa','Nama desa',p.nama_desa)+
+      field('pKecamatan','Kecamatan',p.kecamatan)+
+      field('pKabupaten','Kabupaten',p.kabupaten)+
+      field('pAlamat','Alamat kantor desa',p.alamat)+
+      field('pTelp','Telepon',p.telp)+
+      field('pEmail','Email',p.email)+
+      '<div class="field"><label>Tahun aktif administrasi</label><input type="number" id="pTahun" value="'+p.tahun_aktif+'"></div>'+
+      '<div class="section-title" style="margin-top:18px;">Baris kop surat (di atas nama desa)</div>'+
+      field('pKop1','Baris 1 (cth: Pemerintah Kabupaten ...)',p.kop_garis1)+
+      field('pKop2','Baris 2 (cth: Kecamatan ...)',p.kop_garis2)+
+      '<div class="field"><label>Logo desa/kabupaten</label><input type="file" id="pLogo" accept="image/*"><div class="help">Logo akan tampil di kiri-kanan kop surat.</div></div>'+
+      '<div class="section-title" style="margin-top:18px;">Kepala desa & tanda tangan</div>'+
+      field('pKades','Nama kepala desa aktif',p.kepala_desa)+
+      field('pJabatanTtd','Jabatan penanda tangan',p.jabatan_ttd)+
+      '<div class="field"><label>Tanda tangan digital (gambar)</label><input type="file" id="pTtd" accept="image/*"><div class="help">Tanda tangan hanya akan muncul pada surat yang sudah berstatus Disetujui.</div></div>'+
+      '<button class="btn btn-primary" id="btnSaveProfile" style="margin-top:6px;">Simpan Pengaturan</button>'+
+    '</div>'+
+    '<div class="sticky"><div class="section-title">Pratinjau kop surat</div><div id="kopPreview"></div></div>'+
+  '</div>';
+  function field(id,label,val){ return '<div class="field"><label>'+label+'</label><input id="'+id+'" value="'+escapeHtml(val||'')+'"></div>'; }
+  function updateKopPreview(){
+    document.getElementById('kopPreview').innerHTML = '<div class="doc-frame" style="min-height:auto;">'+renderKop(ST.profile,'')+'</div>';
+  }
+  updateKopPreview();
+  document.getElementById('pLogo').addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ ST.profile.logo = reader.result; updateKopPreview(); };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('pTtd').addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ ST.profile.ttd = reader.result; toast('Tanda tangan dimuat (belum disimpan, klik Simpan Pengaturan).'); };
+    reader.readAsDataURL(f);
+  });
+  ['pNamaDesa','pKecamatan','pKabupaten','pAlamat','pKop1','pKop2'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', ()=>{
+      const map = {pNamaDesa:'nama_desa',pKecamatan:'kecamatan',pKabupaten:'kabupaten',pAlamat:'alamat',pKop1:'kop_garis1',pKop2:'kop_garis2'};
+      ST.profile[map[id]] = document.getElementById(id).value; updateKopPreview();
+    });
+  });
+  document.getElementById('btnSaveProfile').addEventListener('click', async ()=>{
+    ST.profile.nama_desa = document.getElementById('pNamaDesa').value;
+    ST.profile.kecamatan = document.getElementById('pKecamatan').value;
+    ST.profile.kabupaten = document.getElementById('pKabupaten').value;
+    ST.profile.alamat = document.getElementById('pAlamat').value;
+    ST.profile.telp = document.getElementById('pTelp').value;
+    ST.profile.email = document.getElementById('pEmail').value;
+    ST.profile.tahun_aktif = parseInt(document.getElementById('pTahun').value) || ST.profile.tahun_aktif;
+    ST.profile.kop_garis1 = document.getElementById('pKop1').value;
+    ST.profile.kop_garis2 = document.getElementById('pKop2').value;
+    ST.profile.kepala_desa = document.getElementById('pKades').value;
+    ST.profile.jabatan_ttd = document.getElementById('pJabatanTtd').value;
+    await saveProfile(); toast('Pengaturan profil desa tersimpan.'); renderApp();
+  });
+}
+
+/* ============== LAPORAN & EXPORT (Admin) ============== */
+function renderLaporan(){
+  setTopbar('Laporan & Arsip', 'Lihat seluruh surat, filter, dan unduh arsip');
+  document.getElementById('content').innerHTML = '<div class="card">'+
+    '<div class="toolbar">'+
+      '<select id="lapJenis"><option value="">Semua jenis</option>'+Object.keys(JENIS_LABEL).map(j=>'<option value="'+j+'">'+JENIS_LABEL[j]+'</option>').join('')+'</select>'+
+      '<select id="lapStatus"><option value="">Semua status</option>'+Object.keys(STATUS_LABEL).map(s=>'<option value="'+s+'">'+STATUS_LABEL[s]+'</option>').join('')+'</select>'+
+      '<input type="text" id="lapPembuat" placeholder="Cari pembuat...">'+
+      '<div class="spacer"></div>'+
+      '<button class="btn btn-outline btn-sm" id="btnExportCsv">Export Excel (CSV)</button>'+
+      '<button class="btn btn-outline btn-sm" id="btnExportZip">Download Arsip (ZIP)</button>'+
+    '</div>'+
+    '<div id="lapResult"></div>'+
+  '</div>';
+  function currentList(){
+    const jenis = document.getElementById('lapJenis').value;
+    const status = document.getElementById('lapStatus').value;
+    const q = document.getElementById('lapPembuat').value.toLowerCase();
+    return ST.letters.filter(l=>{
+      if(jenis && l.jenis_surat!==jenis) return false;
+      if(status && l.status!==status) return false;
+      if(q){ const u = ST.users.find(u=>u.id===l.dibuat_oleh); if(!u || !u.nama_lengkap.toLowerCase().includes(q)) return false; }
+      return true;
+    }).sort((a,b)=> new Date(b.tanggal_dibuat)-new Date(a.tanggal_dibuat));
+  }
+  function doFilter(){
+    const res = currentList();
+    document.getElementById('lapResult').innerHTML = res.length ? renderLetterTable(res,false) : '<div class="empty-state">Tidak ada data sesuai filter.</div>';
+    bindLetterTableActions(res,false);
+  }
+  ['lapJenis','lapStatus','lapPembuat'].forEach(id=>document.getElementById(id).addEventListener('input', doFilter));
+  doFilter();
+  document.getElementById('btnExportCsv').addEventListener('click', ()=>{
+    const res = currentList();
+    let csv = 'Nomor Surat,Judul/Perihal,Jenis Surat,Status,Pembuat,Tanggal Dibuat\n';
+    res.forEach(l=>{
+      const u = ST.users.find(u=>u.id===l.dibuat_oleh);
+      const row = [l.nomor_lengkap||'-', l.judul||'', JENIS_LABEL[l.jenis_surat]||l.jenis_surat, STATUS_LABEL[l.status], u?u.nama_lengkap:'-', fmtTanggalID(l.tanggal_dibuat)]
+        .map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',');
+      csv += row+'\n';
+    });
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'laporan_surat_'+Date.now()+'.csv'; a.click();
+    toast('Laporan CSV diunduh.');
+  });
+  document.getElementById('btnExportZip').addEventListener('click', async ()=>{
+    if(typeof JSZip === 'undefined'){ toast('Gagal memuat pustaka ZIP. Periksa koneksi internet Anda.'); return; }
+    const res = currentList();
+    if(!res.length){ toast('Tidak ada surat untuk diunduh.'); return; }
+    const zip = new JSZip();
+    res.forEach(l=>{
+      const tpl = ST.templates.find(t=>t.id===l.template_id);
+      const html = '<html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;padding:20px;}.kop{display:flex;align-items:center;gap:16px;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:14px;}.kop img{width:62px;height:62px;}.kop-text{flex:1;text-align:center;}.l1{font-size:13px;font-weight:700;text-transform:uppercase;}.l2{font-size:15px;font-weight:700;text-transform:uppercase;}.l3{font-size:11px;margin-top:2px;}.doc-body{white-space:pre-wrap;margin:14px 0;}.doc-sign{display:flex;justify-content:flex-end;margin-top:26px;}.sign-block{text-align:center;width:240px;}.ttd{height:54px;}</style></head><body>'+renderDocPreview(l, tpl, ST.profile)+'</body></html>';
+      const fname = (l.nomor_lengkap||l.id).replace(/[\/\\?%*:|"<>]/g,'-')+'.html';
+      zip.file(fname, html);
+    });
+    const content = await zip.generateAsync({type:'blob'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = 'arsip_surat_'+Date.now()+'.zip'; a.click();
+    toast('Arsip ZIP diunduh ('+res.length+' surat).');
+  });
+}
+
+/* ============== BOOT ============== */
+async function boot(){
+  render('<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#888;font-family:'+'-apple-system'+';">Memuat SIAD...</div>');
+  await loadAll();
+  render(renderLogin());
+  bindLogin();
+}
+boot();
+</script>
+</body>
+</html>
+
